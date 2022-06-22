@@ -5,9 +5,11 @@ import java.util.concurrent.Executors;
 
 public class Main {
 
-    static final int ARRAY_LENGTH = 100_000_000;
+    static final int ARRAY_LENGTH_FOR_PREFILLING = 1000;
+    static final int ARRAY_LENGTH = 99_999_000;
     static final int ARRAY_ORIGIN = 0;
     static final int ARRAY_BOUND = 100;
+
     static final int THREADS_QUANTITY = 6;
 
     public static void main(String[] args) {
@@ -16,6 +18,11 @@ public class Main {
         ConcurrentHashMap<Integer, Integer> concurrentHashMap = new ConcurrentHashMap<>();
 
         int[] array = generatingIntegerArray(ARRAY_LENGTH, ARRAY_ORIGIN, ARRAY_BOUND);
+
+        //предзаполнение 1000 элементами
+        add(generatingIntegerArray(ARRAY_LENGTH_FOR_PREFILLING, ARRAY_ORIGIN, ARRAY_BOUND), hashMap);
+        add(generatingIntegerArray(ARRAY_LENGTH_FOR_PREFILLING, ARRAY_ORIGIN, ARRAY_BOUND),
+                concurrentHashMap);
 
         ExecutorService service = Executors.newFixedThreadPool(THREADS_QUANTITY);
 
