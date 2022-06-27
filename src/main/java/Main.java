@@ -10,7 +10,10 @@ public class Main {
     static final int ARRAY_ORIGIN = 0;
     static final int ARRAY_BOUND = 100;
 
-    static final int THREADS_QUANTITY = 6;
+    static long timeForAdding;
+    static long timeForReading;
+
+    static final int THREADS_QUANTITY = 4;
 
     public static void main(String[] args) {
         Map<Integer, Integer> hashMap = Collections.synchronizedMap(new HashMap<>());
@@ -26,11 +29,31 @@ public class Main {
 
         ExecutorService service = Executors.newFixedThreadPool(THREADS_QUANTITY);
 
-        countTimeForAdding(array, hashMap, service, "добавление элементов в обертку:");
-        countTimeForAdding(array, concurrentHashMap, service, "добавление элементов в concurrent:");
+        for (int i = 0; i < THREADS_QUANTITY; i++) {
+            service.submit(() -> add(array, hashMap));
+        }
+        System.out.println("Затраченное время на добавление элементов в обертку: " + timeForAdding);
 
-        countTimeForReading(array, hashMap, service, "чтение элементов из обертки:");
-        countTimeForReading(array, concurrentHashMap, service, "чтение элементов из concurrent:");
+        //сброс значения поля для подсчета времени для concurrent
+        timeForAdding = 0;
+
+        for (int i = 0; i < THREADS_QUANTITY; i++) {
+            service.submit(() -> add(array, concurrentHashMap));
+        }
+        System.out.println("Затраченное время на добавление элементов в concurrent: " + timeForAdding);
+
+        for (int i = 0; i < THREADS_QUANTITY; i++) {
+            service.submit(() -> read(array, hashMap));
+        }
+        System.out.println("Затраченное время на чтение элементов из обертку: " + timeForReading);
+
+        //сброс значения поля для подсчета времени для concurrent
+        timeForReading = 0;
+
+        for (int i = 0; i < THREADS_QUANTITY; i++) {
+            service.submit(() -> read(array, concurrentHashMap));
+        }
+        System.out.println("Затраченное время на чтение элементов из concurrent: " + timeForReading);
 
         service.shutdown();
     }
@@ -41,37 +64,20 @@ public class Main {
 
     public static void add(int[] array, Map<Integer, Integer> hashMap) {
         for (int i = 0; i < array.length; i++) {
+            long startTimeAddToHash = System.currentTimeMillis();
             hashMap.put(i, i);
+            long endTimeAddToHash = System.currentTimeMillis();
+            timeForAdding += endTimeAddToHash - startTimeAddToHash;
         }
     }
 
     public static void read(int[] array, Map<Integer, Integer> hashMap) {
         for (int i = 0; i < array.length; i++) {
+            long startTimeAddToHash = System.currentTimeMillis();
             hashMap.get(i);
+            long endTimeAddToHash = System.currentTimeMillis();
+            timeForReading += endTimeAddToHash - startTimeAddToHash;
         }
-    }
-
-    public static void countTimeForAdding(int[] array, Map<Integer, Integer> map,
-                                          ExecutorService service, String str) {
-        long startTimeAddToHash = System.currentTimeMillis();
-        for (int i = 0; i < THREADS_QUANTITY; i++) {
-            service.submit(() -> add(array, map));
-        }
-        long endTimeAddToHash = System.currentTimeMillis();
-        System.out.println("Затраченное время на " + str
-                + (endTimeAddToHash - startTimeAddToHash));
-    }
-
-    public static void countTimeForReading(int[] array, Map<Integer, Integer> map,
-                                           ExecutorService service, String str) {
-        long startTimeReadFromHash = System.currentTimeMillis();
-        for (int i = 0; i < THREADS_QUANTITY; i++) {
-            service.submit(() -> read(array, map));
-        }
-        long endTimeReadFromHash = System.currentTimeMillis();
-        System.out.println("Затраченное время на " + str
-                + (endTimeReadFromHash - startTimeReadFromHash));
-
     }
 }
 
